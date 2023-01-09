@@ -9,7 +9,7 @@ tar -xzf "package.tar.gz" --directory "tmp"
 
 cd tmp/zerotier-ZeroTierOne-*
 
-make-linux -j$(nproc) one
+make -j$(nproc) one
 
 cp zerotier-one ../
 
