@@ -2,7 +2,7 @@
 
 #RufusWilson revision date 2022/01/18
 
-#Set initial variables:	
+#Set initial variables:
 CWD=$(pwd)
 if [ "$TMP" = "" ]; then
   TMP=/tmp
