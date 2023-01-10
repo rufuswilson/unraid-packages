@@ -9,7 +9,7 @@ if [ "$TMP" = "" ]; then
 fi
 
 # The application's name
-PRGNAM=ZerotierOne
+PRGNAM=zerotier
 
 # The version which appears in the application's filename
 VERSION=$(curl --silent "https://api.github.com/repos/zerotier/ZeroTierOne/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
