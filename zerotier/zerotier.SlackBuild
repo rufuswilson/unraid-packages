@@ -3,7 +3,8 @@
 #RufusWilson revision date 2022/01/18
 
 #Set initial variables:
-CWD=$(pwd)
+SCRIPT=$(readlink -f "$0")
+CWD=$(dirname "${SCRIPT}")
 if [ "$TMP" = "" ]; then
   TMP=/tmp
 fi
@@ -87,4 +88,3 @@ cat $CWD/slack-desc > $PKG/install/slack-desc
 ( cd $PKG
   /sbin/makepkg -l y -c n $CWD/$PRGNAM-$VERSION-$ARCH.txz
 )
-
