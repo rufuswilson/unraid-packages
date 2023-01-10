@@ -1,16 +1,15 @@
 #!/bin/bash
 
-vers = $(curl --silent "https://api.github.com/repos/zerotier/ZeroTierOne/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+NERDTOOL="../unRAID-NerdTools"
 
-wget "https://api.github.com/repos/zerotier/ZeroTierOne/tarball/${vers}" -O "package.tar.gz"
 
-mkdir "tmp"
-tar -xzf "package.tar.gz" --directory "tmp"
+# Absolute path to this script, e.g. /home/user/bin/foo.sh
+SCRIPT=$(readlink -f "$0")
+# Absolute path this script is in, thus /home/user/bin
+SCRIPTPATH=$(dirname "$SCRIPT")
 
-cd tmp/zerotier-ZeroTierOne-*
+cd "${NERDTOOL}"
 
-make -j$(nproc) one
-
-cp zerotier-one ../
-
-cd ..
+find "${SCRIPTPATH}" -name '*.txz' -print0  | while IFS= read -r -d '' line; do
+   echo "$line"
+done
