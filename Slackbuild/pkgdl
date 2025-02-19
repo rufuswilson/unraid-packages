@@ -64,6 +64,9 @@ download_package() {
     fi
 }
 
+package_get() {
+	grep -iw "^${1}-[0-9][0-9]*\.[0-9][0-9]*.*$" "${CONSOLIDATEDPATH}.lst"
+}
 
 package_list_check() {
     if [ ! -f "${CONSOLIDATEDPATH}.lst" ]; then
@@ -73,7 +76,7 @@ package_list_check() {
 }
 
 package_available_check() {
-    if [ ! -z "$(grep "^${1}-[0-9]" "${CONSOLIDATEDPATH}.lst")" ]; then
+    if [ ! -z "$(package_get "${1}")" ]; then
         return 0
     else
         return 1
@@ -165,7 +168,7 @@ download() {
         exit 1
     fi
     for p in ${DOWNLOAD_LIST}; do
-        LAT_V="$(grep -i -w "${p}-[0-9a-zA-Z_]\+" "${CONSOLIDATEDPATH}.lst")"
+        LAT_V="$(package_get "${p}")"
         PACKAGE="$(awk '{print $1}' <<< ${LAT_V})"
         URL="$(awk '{print $2}' <<< ${LAT_V})"
         download_package "${p}" "${URL}" "${SCRIPTPATH}/deps/cache/${PACKAGE}"
@@ -183,8 +186,8 @@ download() {
 
 upgrade() {
     for p in $(package_downloaded_find ".*"); do
-        NAME="$(echo ${p} | rev | cut -d '/' -f1 | rev | sed -e 's#^\(.*\)-[0-9]\.[0-9].*$#\1#')"
-        LAT_V="$(grep -i -w "${NAME}-[0-9a-zA-Z_]\+" "${CONSOLIDATEDPATH}.lst")"
+        NAME="$(echo ${p} | rev | cut -d '/' -f1 | rev | sed -e 's#^\(.*\)-[0-9]+\.[0-9].*$#\1#')"
+        LAT_V="$(package_get "${NAME}")"
         PACKAGE="$(awk '{print $1}' <<< ${LAT_V})"
         URL="$(awk '{print $2}' <<< ${LAT_V})"
         if [ "$(basename -- ${p})" != "${PACKAGE}" ]; then
