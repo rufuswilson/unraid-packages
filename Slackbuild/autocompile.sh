@@ -5,7 +5,7 @@ SCRIPTPATH=$(dirname "${SCRIPT}")
 SCRIPTNAME=$(basename -- "${SCRIPT}")
 
 # Update repositories
-# bash "${SCRIPTPATH}/pkgdl" update
+bash "${SCRIPTPATH}/pkgdl" update
 
 echo "Starting compilations"
 for d in ${SCRIPTPATH}/*/ ; do

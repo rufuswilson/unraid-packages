@@ -79,6 +79,9 @@ package_available_check() {
 }
 
 package_downloaded_find() {
+    if [ ! -d "${SCRIPTPATH}/deps/cache" ]; then
+        mkdir -p "${SCRIPTPATH}/deps/cache"
+    fi
     find "${SCRIPTPATH}/deps/cache" -type f | grep -E "^.*/${1}-[0-9][^/]*\.(tbz|tlz|tgz|txz)$" | sort
 }
 package_downloaded_check() {
