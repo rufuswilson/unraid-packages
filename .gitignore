@@ -2,6 +2,6 @@ Slackbuild/deps/cache
 Slackbuild/deps/filelists
 Slackbuild/**/build-deps/
 Slackbuild/**/output/
-Slackbuild/**/update.log
 
 .DS_Store
+*.log
