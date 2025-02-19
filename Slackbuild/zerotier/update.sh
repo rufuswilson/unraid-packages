@@ -9,7 +9,6 @@ VERSIONNEW=$(curl --silent "https://api.github.com/repos/zerotier/ZeroTierOne/re
 if [ ! -f "${SCRIPTPATH}/slackbuild/version" ] ; then
 	echo -n "notexist" > "${SCRIPTPATH}/slackbuild/version"
 fi
-echo -n "notexist" > "${SCRIPTPATH}/slackbuild/version"
 VERSIONOLD=$(cat "${SCRIPTPATH}/slackbuild/version" | tr -d '\n')
 
 if [[ "${VERSIONNEW}" == "${VERSIONOLD}" ]] ; then

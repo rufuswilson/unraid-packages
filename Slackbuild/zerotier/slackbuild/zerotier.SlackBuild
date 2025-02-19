@@ -52,7 +52,7 @@ rm -rf $TMP/$PRGNAM-$VERSION
 cd $TMP || exit 1
 
 # Download the source
-wget --no-check-certificate "https://api.github.com/repos/zerotier/ZeroTierOne/tarball/refs/tags/${VERSION}" -O $PRGNAM-$VERSION.tar.gz
+wget -q --show-progress --progress=bar:force:noscroll --no-check-certificate "https://github.com/zerotier/ZeroTierOne/archive/refs/tags/${VERSION}.tar.gz" -O $PRGNAM-$VERSION.tar.gz
 
 # Extract the application source in TMP
 # Note: if your application comes as a tar.bz2, you need tar -jxvf
