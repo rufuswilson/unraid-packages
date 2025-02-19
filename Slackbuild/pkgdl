@@ -13,17 +13,18 @@ CONSOLIDATEDPATH="${SCRIPTPATH}/deps/filelists/consolidated"
 
 
 download_checksums() {
-    if wget -q --show-progress --progress=bar:force:noscroll -O "${SCRIPTPATH}/deps/filelists/${2}.md5" "${1}/CHECKSUMS.md5" ; then
-        if [ -f "${SCRIPTPATH}/deps/filelists/${2}.lst.old" ]; then
-            rm -f "${SCRIPTPATH}/deps/filelists/${2}.lst.old" "${SCRIPTPATH}/deps/filelists/${2}.md5.old"
+	cd "${SCRIPTPATH}/deps/filelists/"
+    if wget -q --show-progress --progress=bar:force:noscroll -O "${2}.md5" "${1}/CHECKSUMS.md5" ; then
+        if [ -f "${2}.lst.old" ]; then
+            rm -f "${2}.lst.old" "${2}.md5.old"
         fi
     else
-        rm -f "${SCRIPTPATH}/deps/filelists/${2}.lst"
-        rm -f "${SCRIPTPATH}/deps/filelists/${2}.md5"
-        if [ -f "${SCRIPTPATH}/deps/filelists/${2}.lst.old" ]; then
+        rm -f "${2}.lst"
+        rm -f "${2}.md5"
+        if [ -f "${2}.lst.old" ]; then
             echo "Can't fetch package list from repository $2, restoring old list, please try again later...!"
-            mv "${SCRIPTPATH}/deps/filelists/${2}.lst.old" "${SCRIPTPATH}/deps/filelists/${2}.lst"
-            mv "${SCRIPTPATH}/deps/filelists/${2}.md5".old "${SCRIPTPATH}/deps/filelists/${2}.md5"
+            mv "${2}.lst.old" "${2}.lst"
+            mv "${2}.md5".old "${2}.md5"
         else
             echo "Can't fetch checksums from repository $2, please try again later...!"
         fi
@@ -31,18 +32,19 @@ download_checksums() {
 }
 
 download_filelist() {
-    if wget -q --show-progress --progress=bar:force:noscroll -O "${SCRIPTPATH}/deps/filelists/${2}.lst" "${1}/FILE_LIST" ; then
+	cd "${SCRIPTPATH}/deps/filelists/"
+    if wget -q --show-progress --progress=bar:force:noscroll -O "${2}.lst" "${1}/FILE_LIST" ; then
         download_checksums "$1" "$2"
     else
         # Workaround from repositories which use 'FILELIST.TXT' instead of 'FILE_LIST' eg. Conraids repository
-        if wget -q --show-progress --progress=bar:force:noscroll -O "${SCRIPTPATH}/deps/filelists/${2}.lst" "${1}/FILELIST.TXT" ; then
+        if wget -q --show-progress --progress=bar:force:noscroll -O "${2}.lst" "${1}/FILELIST.TXT" ; then
             download_checksums "$1" "$2"
         else
-            rm -f "${SCRIPTPATH}/deps/filelists/${2}.lst"
-            if [ -f "${SCRIPTPATH}/deps/filelists/${2}.lst.old" ]; then
+            rm -f "${2}.lst"
+            if [ -f "${2}.lst.old" ]; then
                 echo "Can't fetch package list, restoring old list, please try again later...!"
-                mv "${SCRIPTPATH}/deps/filelists/${2}.lst.old" "${SCRIPTPATH}/deps/filelists/${2}.lst"
-                mv "${SCRIPTPATH}/deps/filelists/${2}.md5.old" "${SCRIPTPATH}/deps/filelists/${2}.md5"
+                mv "${2}.lst.old" "${2}.lst"
+                mv "${2}.md5.old" "${2}.md5"
             else
                 echo "Can't fetch package list from repository $2, please try again later...!"
             fi
