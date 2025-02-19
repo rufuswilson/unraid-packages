@@ -10,10 +10,10 @@ if [ "$TMP" = "" ]; then
 fi
 
 # The application's name
-PRGNAM=zerotier
+PRGNAM=ZeroTierOne
 
 # The version which appears in the application's filename
-VERSION=$(curl --silent "https://api.github.com/repos/zerotier/ZeroTierOne/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+VERSION=$(cat "${CWD}/version" | tr -d '\n')
 
 # Automatically determine the architecture we're building on:
 if [ -z "$ARCH" ]; then
@@ -52,7 +52,7 @@ rm -rf $TMP/$PRGNAM-$VERSION
 cd $TMP || exit 1
 
 # Download the source
-wget "https://api.github.com/repos/zerotier/ZeroTierOne/tarball/${VERSION}" -O $PRGNAM-$VERSION.tar.gz
+wget --no-check-certificate "https://api.github.com/repos/zerotier/ZeroTierOne/tarball/refs/tags/${VERSION}" -O $PRGNAM-$VERSION.tar.gz
 
 # Extract the application source in TMP
 # Note: if your application comes as a tar.bz2, you need tar -jxvf

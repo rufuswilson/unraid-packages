@@ -1,0 +1,254 @@
+#!/bin/bash
+set -f
+
+# TODO: Add support for auto update of sources.list (time management)
+# TODO: Implement MD5 checksum when download
+
+
+SCRIPT=$(readlink -f "$0")
+SCRIPTPATH=$(dirname "${SCRIPT}")
+SCRIPTNAME=$(basename -- "${SCRIPT}")
+
+CONSOLIDATEDPATH="${SCRIPTPATH}/deps/filelists/consolidated"
+
+
+download_checksums() {
+    if wget -q --show-progress --progress=bar:force:noscroll -O "${SCRIPTPATH}/deps/filelists/${2}.md5" "${1}/CHECKSUMS.md5" ; then
+        if [ -f "${SCRIPTPATH}/deps/filelists/${2}.lst.old" ]; then
+            rm -f "${SCRIPTPATH}/deps/filelists/${2}.lst.old" "${SCRIPTPATH}/deps/filelists/${2}.md5.old"
+        fi
+    else
+        rm -f "${SCRIPTPATH}/deps/filelists/${2}.lst"
+        rm -f "${SCRIPTPATH}/deps/filelists/${2}.md5"
+        if [ -f "${SCRIPTPATH}/deps/filelists/${2}.lst.old" ]; then
+            echo "Can't fetch package list from repository $2, restoring old list, please try again later...!"
+            mv "${SCRIPTPATH}/deps/filelists/${2}.lst.old" "${SCRIPTPATH}/deps/filelists/${2}.lst"
+            mv "${SCRIPTPATH}/deps/filelists/${2}.md5".old "${SCRIPTPATH}/deps/filelists/${2}.md5"
+        else
+            echo "Can't fetch checksums from repository $2, please try again later...!"
+        fi
+    fi
+}
+
+download_filelist() {
+    if wget -q --show-progress --progress=bar:force:noscroll -O "${SCRIPTPATH}/deps/filelists/${2}.lst" "${1}/FILE_LIST" ; then
+        download_checksums "$1" "$2"
+    else
+        # Workaround from repositories which use 'FILELIST.TXT' instead of 'FILE_LIST' eg. Conraids repository
+        if wget -q --show-progress --progress=bar:force:noscroll -O "${SCRIPTPATH}/deps/filelists/${2}.lst" "${1}/FILELIST.TXT" ; then
+            download_checksums "$1" "$2"
+        else
+            rm -f "${SCRIPTPATH}/deps/filelists/${2}.lst"
+            if [ -f "${SCRIPTPATH}/deps/filelists/${2}.lst.old" ]; then
+                echo "Can't fetch package list, restoring old list, please try again later...!"
+                mv "${SCRIPTPATH}/deps/filelists/${2}.lst.old" "${SCRIPTPATH}/deps/filelists/${2}.lst"
+                mv "${SCRIPTPATH}/deps/filelists/${2}.md5.old" "${SCRIPTPATH}/deps/filelists/${2}.md5"
+            else
+                echo "Can't fetch package list from repository $2, please try again later...!"
+            fi
+        fi
+    fi
+}
+
+download_package() {
+    if [ ! -d "${SCRIPTPATH}/deps/cache" ]; then
+        mkdir -p "${SCRIPTPATH}/deps/cache"
+    fi
+    if ! wget -q --show-progress --progress=bar:force:noscroll -O "${3}" "${2}" ; then
+        rm -f "${3}" 2>/dev/null
+        echo ${3}
+        echo "Can't download package ${1}, please try again later...!"
+        exit 1
+    fi
+}
+
+
+package_list_check() {
+    if [ ! -f "${CONSOLIDATEDPATH}.lst" ]; then
+        echo "Please run '${SCRIPTNAME} update' first!"
+        return 1
+    fi
+}
+
+package_available_check() {
+    if [ ! -z "$(grep "^${1}-[0-9]" "${CONSOLIDATEDPATH}.lst")" ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+package_downloaded_find() {
+    find "${SCRIPTPATH}/deps/cache" -type f | grep -E "^.*/${1}-[0-9][^/]*\.(tbz|tlz|tgz|txz)$" | sort
+}
+package_downloaded_check() {
+    if [ ! -z "$(package_downloaded_find ${1})" ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+
+update() {
+    # Create folder if non exists
+    if [ ! -d "${SCRIPTPATH}/deps/filelists/" ]; then
+        mkdir -p "${SCRIPTPATH}/deps/filelists/"
+    fi
+
+    rm -rf "${CONSOLIDATEDPATH}".{lst,md5} 2>/dev/null
+    SOURCES="consolidated"
+
+    # Check for sources.list file
+    # Read sources.list file and download packagelists
+    while read source; do
+        if [ "${source::1}" != "#" ]; then
+            REPO="${source##* }"
+            echo "Updating repository: ${REPO}"
+            URL="$(echo "${source% *}" | sed -e 's#/$##')"
+            download_filelist "${URL}" "${REPO}"
+            grep -E "\.(tbz|tlz|tgz|txz)$" "${SCRIPTPATH}/deps/filelists/${REPO}.lst" | awk '{print $NF}' | sed 's/^[.]\///' | sed "s#^\(.*\)/\(.*\)\$#\2 ${URL}/\1/\2#" >> "${CONSOLIDATEDPATH}.lst"
+            grep -E "\.(tbz|tlz|tgz|txz)$" "${SCRIPTPATH}/deps/filelists/${REPO}.md5" | sed -e 's#\./##' >> "${CONSOLIDATEDPATH}.md5"
+            echo "----"
+            SOURCES="${SOURCES}|${REPO}"
+        fi
+    done <<< "$(cat "${SCRIPTPATH}/deps/sources.list" | sed '/^$/d')"
+    sort -o "${CONSOLIDATEDPATH}.lst" "${CONSOLIDATEDPATH}.lst"
+
+    # Remove filelists not linked to a source
+    if [ ! -z ${SOURCES} ]; then
+        rm -f $(find "${SCRIPTPATH}/deps/filelists/" -type f | grep -Ev "${SOURCES}")
+    fi
+}
+
+download() {
+    if [ ! -d "${1}" ]; then
+        echo "Output folder doesn't exist: ${1}"
+        exit 1
+    fi
+    OUTPUT="$(readlink -f "${1}")"
+    shift
+    for p in $@; do
+        package_available_check ${p}
+        if [ "$?" == 0 ]; then
+            package_downloaded_check ${p}
+            if [ "$?" == 0 ]; then
+                echo "Package ${p} is already downloaded on your system!"
+                p_="$(basename -- $(package_downloaded_find ${p}))"
+                if [ ! -z "${PACKAGE_LIST}" ]; then
+                    PACKAGE_LIST="${PACKAGE_LIST} ${p_}"
+                else
+                    PACKAGE_LIST="${p_}"
+                fi
+            else
+                if [ ! -z "${DOWNLOAD_LIST}" ]; then
+                    DOWNLOAD_LIST="${DOWNLOAD_LIST} ${p}"
+                else
+                    DOWNLOAD_LIST="${p}"
+                fi
+            fi
+        else
+            if [ ! -z "${FAILED_LIST}" ]; then
+                FAILED_LIST="${FAILED_LIST} ${p}"
+            else
+                FAILED_LIST="${p}"
+            fi
+        fi
+    done
+    if [ ! -z "${FAILED_LIST}" ]; then
+        echo "Can't find package(s): ${FAILED_LIST// /, }!"
+        exit 1
+    fi
+    for p in ${DOWNLOAD_LIST}; do
+        LAT_V="$(grep -i -w "${p}-[0-9a-zA-Z_]\+" "${CONSOLIDATEDPATH}.lst")"
+        PACKAGE="$(awk '{print $1}' <<< ${LAT_V})"
+        URL="$(awk '{print $2}' <<< ${LAT_V})"
+        download_package "${p}" "${URL}" "${SCRIPTPATH}/deps/cache/${PACKAGE}"
+        if [ ! -z "${PACKAGE_LIST}" ]; then
+            PACKAGE_LIST="${PACKAGE_LIST} ${PACKAGE}"
+        else
+            PACKAGE_LIST="${PACKAGE}"
+        fi
+    done
+    for p in ${PACKAGE_LIST}; do
+        echo "Copying to "${OUTPUT}/${p}""
+        cp "${SCRIPTPATH}/deps/cache/${p}" "${OUTPUT}/${p}"
+    done
+}
+
+upgrade() {
+    for p in $(package_downloaded_find ".*"); do
+        NAME="$(echo ${p} | rev | cut -d '/' -f1 | rev | sed -e 's#^\(.*\)-[0-9]\.[0-9].*$#\1#')"
+        LAT_V="$(grep -i -w "${NAME}-[0-9a-zA-Z_]\+" "${CONSOLIDATEDPATH}.lst")"
+        PACKAGE="$(awk '{print $1}' <<< ${LAT_V})"
+        URL="$(awk '{print $2}' <<< ${LAT_V})"
+        if [ "$(basename -- ${p})" != "${PACKAGE}" ]; then
+            download_package "${NAME}" "${URL}" "${SCRIPTPATH}/deps/cache/${PACKAGE}"
+            rm "${p}"
+        fi
+    done
+}
+
+cleanup() {
+    if [ -d "${SCRIPTPATH}/deps/cache" ]; then
+        rm -rf "${SCRIPTPATH}/deps/cache"
+    fi
+    if [ -d "${SCRIPTPATH}/deps/filelists" ]; then
+        rm -rf "${SCRIPTPATH}/deps/filelists"
+    fi
+    find "${SCRIPTPATH}" -d -name "build-deps" -exec rm -rf {} \;
+}
+
+
+usage_general() {
+    echo "Slackware dependencies download tool for unRAID."
+    echo
+    echo "${SCRIPTNAME} is a package download tool"
+    echo "for unRAID for Slackware package repositories."
+    echo
+    echo "Most used commands are:"
+    echo "  update    - Updates the sources list locally"
+    echo "  download  - Downloads packages"
+    echo "  upgrade   - Upgrades the packages in the cache"
+    echo "  cleanup   - Will cleanup the Slackbuild directory for dependencies"
+    echo
+    echo "Example usages:"
+    echo "  ${SCRIPTNAME} update"
+    echo "  ${SCRIPTNAME} download folder1/folder2 python3 python-pip"
+    echo "  ${SCRIPTNAME} upgrade"
+    echo "  ${SCRIPTNAME} cleanup"
+    echo
+    echo "Written by Rufus Wilson for unRAID."
+    echo "Adapted from un-get by Christoph Hummer."
+}
+
+usage_download() {
+    echo "Usage example:"
+    echo "  ${SCRIPTNAME} download folder1/folder2 python3"
+    echo "  ${SCRIPTNAME} download ../folder1 python-pip python-setuptools"
+}
+
+if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
+    usage_general
+    exit 0
+elif [ "$1" == "download" ]; then
+    package_list_check
+    if [ $(expr $# - 1) -lt 1 ]; then
+        usage_download
+        exit 1
+    elif [ "$(echo "${@:2}" | tr -dc '[:alnum:]\n\r')" == "pkgget" ]; then
+        usage_download
+        exit 1
+    else
+        download "${@:2}"
+    fi
+elif [ "$1" == "update" ]; then
+    update
+elif [ "$1" == "upgrade" ]; then
+    upgrade
+elif [ "$1" == "cleanup" ]; then
+    cleanup
+else
+    usage_general
+    exit 1
+fi
