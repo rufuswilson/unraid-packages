@@ -1,69 +1,74 @@
 #!/bin/bash -e
 
-#RufusWilson revision date 2022/01/18
+#RufusWilson revision date 2025/06/09
+
+
+SCRIPT=$(readlink -f "$0")
+SCRIPTPATH=$(dirname "${SCRIPT}")
+SCRIPTNAME=$(basename -- "${SCRIPT}")
+
 
 #Set initial variables:
-SCRIPT=$(readlink -f "$0")
-CWD=$(dirname "${SCRIPT}")
-if [ "$TMP" = "" ]; then
-  TMP=/tmp
-fi
+PRGNAM=zerotier-one
+GH_NAME=ZeroTierOne
+VERSION=${VERSION:-1.14.2}
+BUILD=${BUILD:-1}
+TAG=${TAG:-_SBo}
+PKGTYPE=${PKGTYPE:-txz}
+CWD=$(pwd)
+TMP=${TMP:-/tmp}/$PRGNAM-$VERSION
+PKG=$TMP/package
+OUTPUT=${OUTPUT:-${SCRIPTPATH}}
 
-# The application's name
-PRGNAM=ZeroTierOne
-
-# The version which appears in the application's filename
-VERSION=$(cat "${CWD}/version" | tr -d '\n')
 
 # Automatically determine the architecture we're building on:
 if [ -z "$ARCH" ]; then
   case "$( uname -m )" in
     i?86) ARCH=i486 ;;
     arm*) ARCH=arm ;;
+    # Unless $ARCH is already set, use uname -m for all other archs:
        *) ARCH=$( uname -m ) ;;
   esac
 fi
 
-# The installation directory of the package (where its actual directory
-# structure will be created)
-PKG=$TMP/package-$PRGNAM
+if [ ! -z "${PRINT_PACKAGE_NAME}" ]; then
+  echo "$PRGNAM-$VERSION-$ARCH-$BUILD$TAG.$PKGTYPE"
+  exit 0
+fi
 
-if [ "$ARCH" = "i486" ]; then
-  SLKCFLAGS="-O2 -march=i486 -mtune=i686"
+
+if [ "$ARCH" = "i586" ]; then
   LIBDIRSUFFIX=""
 elif [ "$ARCH" = "i686" ]; then
-  SLKCFLAGS="-O2 -march=i686 -mtune=i686"
   LIBDIRSUFFIX=""
 elif [ "$ARCH" = "x86_64" ]; then
-  SLKCFLAGS="-O2 -fPIC"
   LIBDIRSUFFIX="64"
 else
-  SLKCFLAGS="-O2"
   LIBDIRSUFFIX=""
 fi
 
 # Delete the leftover directories if they exist (due to a previous build)
 # and (re)create the packaging directory
-rm -rf $PKG
-mkdir -p $TMP $PKG
-rm -rf $TMP/$PRGNAM-$VERSION
-
-# Change to the TMP directory
+rm -rf $PKG || exit 1
+rm -rf $TMP/$GH_NAME-$VERSION || exit 1
+mkdir -p $TMP $PKG $OUTPUT || exit 1
 cd $TMP || exit 1
 
 # Download the source
-wget -q --show-progress --progress=bar:force:noscroll --no-check-certificate "https://github.com/zerotier/ZeroTierOne/archive/refs/tags/${VERSION}.tar.gz" -O $PRGNAM-$VERSION.tar.gz
+wget -q --show-progress --progress=bar:force:noscroll --no-check-certificate \
+    "https://github.com/zerotier/ZeroTierOne/archive/refs/tags/${VERSION}.tar.gz" \
+    -O $PRGNAM-$VERSION.tar.gz || exit 1
 
 # Extract the application source in TMP
 # Note: if your application comes as a tar.bz2, you need tar -jxvf
 tar -zxf $PRGNAM-$VERSION.tar.gz || exit 1
 
 # Change to the application source directory
-cd zerotier-ZeroTierOne* || exit 1
+cd $GH_NAME-$VERSION || exit 1
 
 # Change ownership and permissions if necessary
 # This may not be needed in some source tarballs, but it never hurts
-chmod -R u+w,go+r-w,a-s .
+chmod -R u+w,go+r-w,a-s . || exit 1
 
 # Compile the source, but exit if anything goes wrong
 make one || exit 1
@@ -74,17 +79,41 @@ make manpages || exit 1
 # Install everything into the package directory, but exit if anything goes wrong
 make install DESTDIR=$PKG || exit 1
 
+# Strip some libraries and binaries
+find $PKG -print0 | xargs -0 file | grep -e "executable" -e "shared object" | \
+    grep ELF | cut -f 1 -d : | xargs -r strip --strip-unneeded || exit 1
+
+# Remove Perl leftovers
+find $PKG -name perllocal.pod \
+    -o -name ".packlist" \
+    -o -name "*.bs" \
+    | xargs rm -f || exit 1
+
+# Clean up manpages
+mv $PKG/usr/share/man $PKG/usr/
+rm -r $PKG/usr/share 2> /dev/null
+find $PKG/usr/man -type f -exec gzip -9 {} \;
+for i in $( find $PKG/usr/man -type l ) ; do
+    ln -s $( readlink ${i} ).gz ${i}.gz
+    rm $i
+done
+
+# Create verion info
+mkdir -p $PKG/usr/doc/$PRGNAM-$VERSION
+cat "${SCRIPT}" > $PKG/usr/doc/$PRGNAM-$VERSION/$PRGNAM.SlackBuild
+
 # Create the ./install directory and copy the slack-desc into it
 mkdir -p $PKG/install
-cat $CWD/slack-desc > $PKG/install/slack-desc
+cat ${SCRIPTPATH}/slack-desc > $PKG/install/slack-desc
+if [ -f ${SCRIPTPATH}/doinst.sh ] ; then cat ${SCRIPTPATH}/doinst.sh > $PKG/install/doinst.sh; fi
+if [ -f ${SCRIPTPATH}/dependees-on ]; then cat ${SCRIPTPATH}/dependees-on > $PKG/usr/doc/$PRGNAM-$VERSION/dependees-on; fi
+if [ -f ${SCRIPTPATH}/slack-required ]; then cat ${SCRIPTPATH}/slack-required > $PKG/usr/doc/$PRGNAM-$VERSION/slack-required; fi
+if [ -f ${SCRIPTPATH}/slack-required ]; then cat ${SCRIPTPATH}/slack-required > $PKG/install/slack-required; fi
 
-# Strip some libraries and binaries
-( cd $PKG
-  find . | xargs file | grep "executable" | grep ELF | cut -f 1 -d : | xargs -r strip --strip-unneeded #2> /dev/null
-  find . | xargs file | grep "shared object" | grep ELF | cut -f 1 -d : | xargs -r strip --strip-unneeded #2> /dev/null
-)
+# Defines owners and permissions
+cd $PKG
+chmod -R 755 .
 
 # Build the package
-( cd $PKG
-  /sbin/makepkg -l y -c n $CWD/$PRGNAM-$VERSION-$ARCH.txz
-)
+/sbin/makepkg -l y -p -c n $OUTPUT/$PRGNAM-$VERSION-$ARCH-$BUILD$TAG.$PKGTYPE
+
