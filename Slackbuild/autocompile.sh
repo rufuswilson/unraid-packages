@@ -9,10 +9,10 @@ bash "${SCRIPTPATH}/pkgdl" update
 
 echo "Starting compilations"
 for d in ${SCRIPTPATH}/*/ ; do
-   if [ ! -d "${d}slackbuild" ] ; then
+   d="$(echo "${d}" | sed -e 's#/$##')"
+   if [ ! -d "${d}/slackbuild" ] ; then
       continue
    fi
-   d="$(echo "${d}" | sed -e 's#/$##')"
    PACKAGE=$(basename -- "${d}")
    
    echo "  ${PACKAGE}"
@@ -39,15 +39,21 @@ for d in ${SCRIPTPATH}/*/ ; do
    DEPS="$(cat "${d}/requirements.txt" | tr -s '\n' ' ')"
    bash "${SCRIPTPATH}/pkgdl" download "${d}/build-deps" ${DEPS} > "${d}/output/deps.log"
 
+   echo "     Getting version"
+   VERSIONNEW=$(cat "${d}/slackbuild/version" | tr -d '\n')
+
    echo "     Building package"
-   docker run --rm --name SlackBuilder${PACKAGE}${VERSIONNEW}\
-      -v ${d}/build-deps:/build-deps \
-      -v ${d}/slackbuild:/slackbuild \
-      -v ${d}/output:/output \
+   docker run \
+      --rm --privileged \
+      --name SBR_${PACKAGE}_${VERSIONNEW} \
+      --mount type=bind,src=${d}/build-deps,dst=/build-deps \
+      --mount type=bind,src=${d}/slackbuild,dst=/slackbuild \
+      --mount type=bind,src=${d}/output,dst=/output \
       -e OUTPUT=/output \
       -e TMP=/tmp \
-      -o "${d}/output/compile.log" \
-      ghcr.io/lanjelin/slackbuilder:latest
+      -it --entrypoint /bin/bash \
+      ghcr.io/lanjelin/slackbuilder:latest \
+      > "${d}/output/compile.log"
 
    # if [ ! -d "${SCRIPTPATH}/../slackware64-current/${SCRIPTNAME}" ] ; then
    #    mkdir "${SCRIPTPATH}/../slackware64-current/${SCRIPTNAME}"
@@ -60,7 +66,3 @@ for d in ${SCRIPTPATH}/*/ ; do
 done
 
 echo "Compilation finished"
-
-exit 0
-
-bash "${SCRIPTPATH}/update.sh"
