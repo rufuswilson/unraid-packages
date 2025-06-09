@@ -11,9 +11,9 @@ SCRIPTNAME=$(basename -- "${SCRIPT}")
 #Set initial variables:
 PRGNAM=zerotier-one
 GH_NAME=ZeroTierOne
-VERSION=${VERSION:-1.14.2}
+VERSION=${VERSION:-$(cat "${SCRIPTPATH}/version")}
 BUILD=${BUILD:-1}
-TAG=${TAG:-_SBo}
+TAG=${TAG:-_RW}
 PKGTYPE=${PKGTYPE:-txz}
 CWD=$(pwd)
 TMP=${TMP:-/tmp}/$PRGNAM-$VERSION
@@ -70,6 +70,9 @@ cd $GH_NAME-$VERSION || exit 1
 # This may not be needed in some source tarballs, but it never hurts
 chmod -R u+w,go+r-w,a-s . || exit 1
 
+# defines certificate for cargo
+export CARGO_HTTP_CAINFO=/etc/ssl/certs/ca-certificates.crt
+
 # Compile the source, but exit if anything goes wrong
 make one || exit 1
 
@@ -112,6 +115,7 @@ if [ -f ${SCRIPTPATH}/slack-required ]; then cat ${SCRIPTPATH}/slack-required > 
 
 # Defines owners and permissions
 cd $PKG
+chown -R root:root .
 chmod -R 755 .
 
 # Build the package

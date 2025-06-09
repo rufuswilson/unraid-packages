@@ -1,6 +1,6 @@
 Slackbuild/pkgdl-deps/cache
 Slackbuild/pkgdl-deps/filelists
-Slackbuild/**/build-deps/
+Slackbuild/**/build-deps/*.txz
 Slackbuild/**/output/
 
 .DS_Store

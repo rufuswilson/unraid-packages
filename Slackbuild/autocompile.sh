@@ -44,7 +44,7 @@ for d in ${SCRIPTPATH}/*/ ; do
 
    echo "     Building package"
    docker run \
-      --rm --privileged \
+      --rm \
       --name SBR_${PACKAGE}_${VERSIONNEW} \
       --mount type=bind,src=${d}/build-deps,dst=/build-deps \
       --mount type=bind,src=${d}/slackbuild,dst=/slackbuild \
@@ -54,14 +54,15 @@ for d in ${SCRIPTPATH}/*/ ; do
       -it --entrypoint /bin/bash \
       ghcr.io/lanjelin/slackbuilder:latest \
       > "${d}/output/compile.log"
+      # -it --entrypoint /bin/bash \
 
-   # if [ ! -d "${SCRIPTPATH}/../slackware64-current/${SCRIPTNAME}" ] ; then
-   #    mkdir "${SCRIPTPATH}/../slackware64-current/${SCRIPTNAME}"
+   # if [ ! -d "${SCRIPTPATH}/../slackware64-current/${PACKAGE}" ] ; then
+   #    mkdir "${SCRIPTPATH}/../slackware64-current/${PACKAGE}"
    # fi
 
    # echo "     Comitting changes"
    # git add "${d}/slackbuild/version"
-   # git add "${SCRIPTPATH}/../slackware64-current/${SCRIPTNAME}"
+   # git add "${SCRIPTPATH}/../slackware64-current/${PACKAGE}/*"
    # git commit -m "updated version for ${PACKAGE}"
 done
 

@@ -68,7 +68,7 @@ download_package() {
 }
 
 package_get() {
-    grep -iw "^${1}-[0-9][0-9]*\.[0-9][0-9]*.*$" "${CONSOLIDATEDPATH}.lst"
+    grep -iw "^${1}-[0-9][0-9]*\.*[0-9][0-9]*.*$" "${CONSOLIDATEDPATH}.lst"
 }
 
 package_list_check() {
