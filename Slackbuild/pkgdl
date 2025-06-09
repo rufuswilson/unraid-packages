@@ -9,11 +9,11 @@ SCRIPT=$(readlink -f "$0")
 SCRIPTPATH=$(dirname "${SCRIPT}")
 SCRIPTNAME=$(basename -- "${SCRIPT}")
 
-CONSOLIDATEDPATH="${SCRIPTPATH}/deps/filelists/consolidated"
+CONSOLIDATEDPATH="${SCRIPTPATH}/pkgdl-deps/filelists/consolidated"
 
 
 download_checksums() {
-	cd "${SCRIPTPATH}/deps/filelists/"
+    cd "${SCRIPTPATH}/pkgdl-deps/filelists/"
     if wget -q --show-progress --progress=bar:force:noscroll -O "${2}.md5" "${1}/CHECKSUMS.md5" ; then
         if [ -f "${2}.lst.old" ]; then
             rm -f "${2}.lst.old" "${2}.md5.old"
@@ -32,7 +32,7 @@ download_checksums() {
 }
 
 download_filelist() {
-	cd "${SCRIPTPATH}/deps/filelists/"
+    cd "${SCRIPTPATH}/pkgdl-deps/filelists/"
     if wget -q --show-progress --progress=bar:force:noscroll -O "${2}.lst" "${1}/FILE_LIST" ; then
         download_checksums "$1" "$2"
     else
@@ -53,8 +53,11 @@ download_filelist() {
 }
 
 download_package() {
-    if [ ! -d "${SCRIPTPATH}/deps/cache" ]; then
-        mkdir -p "${SCRIPTPATH}/deps/cache"
+    if [ ! -d "${SCRIPTPATH}/pkgdl-deps" ]; then
+        mkdir -p "${SCRIPTPATH}/pkgdl-deps"
+    fi
+    if [ ! -d "${SCRIPTPATH}/pkgdl-deps/cache" ]; then
+        mkdir -p "${SCRIPTPATH}/pkgdl-deps/cache"
     fi
     if ! wget -q --show-progress --progress=bar:force:noscroll -O "${3}" "${2}" ; then
         rm -f "${3}" 2>/dev/null
@@ -65,7 +68,7 @@ download_package() {
 }
 
 package_get() {
-	grep -iw "^${1}-[0-9][0-9]*\.[0-9][0-9]*.*$" "${CONSOLIDATEDPATH}.lst"
+    grep -iw "^${1}-[0-9][0-9]*\.[0-9][0-9]*.*$" "${CONSOLIDATEDPATH}.lst"
 }
 
 package_list_check() {
@@ -84,10 +87,13 @@ package_available_check() {
 }
 
 package_downloaded_find() {
-    if [ ! -d "${SCRIPTPATH}/deps/cache" ]; then
-        mkdir -p "${SCRIPTPATH}/deps/cache"
+    if [ ! -d "${SCRIPTPATH}/pkgdl-deps" ]; then
+        mkdir -p "${SCRIPTPATH}/pkgdl-deps"
     fi
-    find "${SCRIPTPATH}/deps/cache" -type f | grep -E "^.*/${1}-[0-9][^/]*\.(tbz|tlz|tgz|txz)$" | sort
+    if [ ! -d "${SCRIPTPATH}/pkgdl-deps/cache" ]; then
+        mkdir -p "${SCRIPTPATH}/pkgdl-deps/cache"
+    fi
+    find "${SCRIPTPATH}/pkgdl-deps/cache" -type f | grep -E "^.*/${1}-[0-9][^/]*\.(tbz|tlz|tgz|txz)$" | sort
 }
 package_downloaded_check() {
     if [ ! -z "$(package_downloaded_find ${1})" ]; then
@@ -100,8 +106,8 @@ package_downloaded_check() {
 
 update() {
     # Create folder if non exists
-    if [ ! -d "${SCRIPTPATH}/deps/filelists/" ]; then
-        mkdir -p "${SCRIPTPATH}/deps/filelists/"
+    if [ ! -d "${SCRIPTPATH}/pkgdl-deps/filelists" ]; then
+        mkdir -p "${SCRIPTPATH}/pkgdl-deps/filelists"
     fi
 
     rm -rf "${CONSOLIDATEDPATH}".{lst,md5} 2>/dev/null
@@ -115,17 +121,17 @@ update() {
             echo "Updating repository: ${REPO}"
             URL="$(echo "${source% *}" | sed -e 's#/$##')"
             download_filelist "${URL}" "${REPO}"
-            grep -E "\.(tbz|tlz|tgz|txz)$" "${SCRIPTPATH}/deps/filelists/${REPO}.lst" | awk '{print $NF}' | sed 's/^[.]\///' | sed "s#^\(.*\)/\(.*\)\$#\2 ${URL}/\1/\2#" >> "${CONSOLIDATEDPATH}.lst"
-            grep -E "\.(tbz|tlz|tgz|txz)$" "${SCRIPTPATH}/deps/filelists/${REPO}.md5" | sed -e 's#\./##' >> "${CONSOLIDATEDPATH}.md5"
+            grep -E "\.(tbz|tlz|tgz|txz)$" "${SCRIPTPATH}/pkgdl-deps/filelists/${REPO}.lst" | awk '{print $NF}' | sed 's/^[.]\///' | sed "s#^\(.*\)/\(.*\)\$#\2 ${URL}/\1/\2#" >> "${CONSOLIDATEDPATH}.lst"
+            grep -E "\.(tbz|tlz|tgz|txz)$" "${SCRIPTPATH}/pkgdl-deps/filelists/${REPO}.md5" | sed -e 's#\./##' >> "${CONSOLIDATEDPATH}.md5"
             echo "----"
             SOURCES="${SOURCES}|${REPO}"
         fi
-    done <<< "$(cat "${SCRIPTPATH}/deps/sources.list" | sed '/^$/d')"
+    done <<< "$(cat "${SCRIPTPATH}/pkgdl-deps/sources.list" | sed '/^$/d')"
     sort -o "${CONSOLIDATEDPATH}.lst" "${CONSOLIDATEDPATH}.lst"
 
     # Remove filelists not linked to a source
     if [ ! -z ${SOURCES} ]; then
-        rm -f $(find "${SCRIPTPATH}/deps/filelists/" -type f | grep -Ev "${SOURCES}")
+        rm -f $(find "${SCRIPTPATH}/pkgdl-deps/filelists/" -type f | grep -Ev "${SOURCES}")
     fi
 }
 
@@ -171,7 +177,7 @@ download() {
         LAT_V="$(package_get "${p}")"
         PACKAGE="$(awk '{print $1}' <<< ${LAT_V})"
         URL="$(awk '{print $2}' <<< ${LAT_V})"
-        download_package "${p}" "${URL}" "${SCRIPTPATH}/deps/cache/${PACKAGE}"
+        download_package "${p}" "${URL}" "${SCRIPTPATH}/pkgdl-deps/cache/${PACKAGE}"
         if [ ! -z "${PACKAGE_LIST}" ]; then
             PACKAGE_LIST="${PACKAGE_LIST} ${PACKAGE}"
         else
@@ -180,7 +186,7 @@ download() {
     done
     for p in ${PACKAGE_LIST}; do
         echo "Copying to "${OUTPUT}/${p}""
-        cp "${SCRIPTPATH}/deps/cache/${p}" "${OUTPUT}/${p}"
+        cp "${SCRIPTPATH}/pkgdl-deps/cache/${p}" "${OUTPUT}/${p}"
     done
 }
 
@@ -191,18 +197,18 @@ upgrade() {
         PACKAGE="$(awk '{print $1}' <<< ${LAT_V})"
         URL="$(awk '{print $2}' <<< ${LAT_V})"
         if [ "$(basename -- ${p})" != "${PACKAGE}" ]; then
-            download_package "${NAME}" "${URL}" "${SCRIPTPATH}/deps/cache/${PACKAGE}"
+            download_package "${NAME}" "${URL}" "${SCRIPTPATH}/pkgdl-deps/cache/${PACKAGE}"
             rm "${p}"
         fi
     done
 }
 
 cleanup() {
-    if [ -d "${SCRIPTPATH}/deps/cache" ]; then
-        rm -rf "${SCRIPTPATH}/deps/cache"
+    if [ -d "${SCRIPTPATH}/pkgdl-deps/cache" ]; then
+        rm -rf "${SCRIPTPATH}/pkgdl-deps/cache"
     fi
-    if [ -d "${SCRIPTPATH}/deps/filelists" ]; then
-        rm -rf "${SCRIPTPATH}/deps/filelists"
+    if [ -d "${SCRIPTPATH}/pkgdl-deps/filelists" ]; then
+        rm -rf "${SCRIPTPATH}/pkgdl-deps/filelists"
     fi
     find "${SCRIPTPATH}" -d -name "build-deps" -exec rm -rf {} \;
 }

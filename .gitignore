@@ -1,7 +1,8 @@
-Slackbuild/deps/cache
-Slackbuild/deps/filelists
+Slackbuild/pkgdl-deps/cache
+Slackbuild/pkgdl-deps/filelists
 Slackbuild/**/build-deps/
 Slackbuild/**/output/
 
 .DS_Store
 *.log
+.Trash-*
