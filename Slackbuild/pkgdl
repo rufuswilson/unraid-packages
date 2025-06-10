@@ -210,7 +210,7 @@ cleanup() {
     if [ -d "${SCRIPTPATH}/pkgdl-deps/filelists" ]; then
         rm -rf "${SCRIPTPATH}/pkgdl-deps/filelists"
     fi
-    find "${SCRIPTPATH}" -d -name "build-deps" -exec rm -rf {} \;
+    find "${SCRIPTPATH}" -d -name "build-deps" -exec rm -rf {}/*.txz \;
 }
 
 
