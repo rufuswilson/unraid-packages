@@ -63,15 +63,16 @@ for d in ${SCRIPTPATH}/*/ ; do
    if [ ! -d "${SCRIPTPATH}/../slackware64-current/${PACKAGE}" ] ; then
       mkdir "${SCRIPTPATH}/../slackware64-current/${PACKAGE}"
    fi
+   rm "${SCRIPTPATH}/../slackware64-current/${PACKAGE}/"*.*
    cp "${d}/output/"*.* "${SCRIPTPATH}/../slackware64-current/${PACKAGE}/"
    rm "${SCRIPTPATH}/../slackware64-current/${PACKAGE}/"*.log
 
-   echo "     Comitting changes"
+   echo "     Staging changes"
    git add "${d}/slackbuild/version"
    git add -A "${SCRIPTPATH}/../slackware64-current/${PACKAGE}/"
 done
 
-if [[ ! -z "$(git status -s | grep '^[MTADRCU]')" ]] ; then
+if [ ! -z "$(git status -s | grep '^[MTADRCU]')" ] ; then
 	bash "${SCRIPTPATH}/../slackware64-current/buildlist.sh" "${SCRIPTPATH}/../slackware64-current/"
 	git add "${SCRIPTPATH}/../slackware64-current/"
 	git commit -m "Packages updated"
