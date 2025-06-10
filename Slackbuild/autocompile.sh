@@ -54,7 +54,7 @@ for d in ${SCRIPTPATH}/*/ ; do
       -e TMP=/tmp \
       ghcr.io/lanjelin/slackbuilder:latest \
       > "${d}/output/compile.log"
-      -it --entrypoint /bin/bash \
+      # -it --entrypoint /bin/bash \
 
    echo "     Copying package to repo"
    if [ ! -d "${SCRIPTPATH}/../slackware64-current" ] ; then
