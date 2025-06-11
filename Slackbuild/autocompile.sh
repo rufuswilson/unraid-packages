@@ -71,7 +71,7 @@ for d in ${SCRIPTPATH}/*/ ; do
       ghcr.io/lanjelin/slackbuilder:latest
       # -it --entrypoint /bin/bash \
    
-   if [[ -z "$( ls -A '${d}/output/' )" ]]; then
+   if [[ -z "$( ls -A "${d}/output/" )" ]]; then
       echo "          xx Failed to build"
       continue
    fi
