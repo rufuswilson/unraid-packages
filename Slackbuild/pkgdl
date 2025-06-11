@@ -14,7 +14,7 @@ CONSOLIDATEDPATH="${SCRIPTPATH}/pkgdl-deps/filelists/consolidated"
 
 download_checksums() {
     cd "${SCRIPTPATH}/pkgdl-deps/filelists/"
-    if wget -q -nv --show-progress --progress=dot:giga -O "${2}.md5" "${1}/CHECKSUMS.md5" ; then
+    if wget -q -nv -O "${2}.md5" "${1}/CHECKSUMS.md5" ; then
         if [[ -f "${2}.lst.old" ]]; then
             rm -f "${2}.lst.old" "${2}.md5.old"
         fi
@@ -33,11 +33,11 @@ download_checksums() {
 
 download_filelist() {
     cd "${SCRIPTPATH}/pkgdl-deps/filelists/"
-    if wget -q -nv --show-progress --progress=dot:giga -O "${2}.lst" "${1}/FILE_LIST" ; then
+    if wget -q -nv -O "${2}.lst" "${1}/FILE_LIST" ; then
         download_checksums "$1" "$2"
     else
         # Workaround from repositories which use 'FILELIST.TXT' instead of 'FILE_LIST' eg. Conraids repository
-        if wget -q -nv --show-progress --progress=dot:giga -O "${2}.lst" "${1}/FILELIST.TXT" ; then
+        if wget -q -nv -O "${2}.lst" "${1}/FILELIST.TXT" ; then
             download_checksums "$1" "$2"
         else
             rm -f "${2}.lst"
@@ -59,7 +59,7 @@ download_package() {
     if [[ ! -d "${SCRIPTPATH}/pkgdl-deps/cache" ]]; then
         mkdir -p "${SCRIPTPATH}/pkgdl-deps/cache"
     fi
-    if ! wget -q -nv --show-progress --progress=dot:giga -O "${3}" "${2}" ; then
+    if ! wget -q -nv -O "${3}" "${2}" ; then
         rm -f "${3}" 2>/dev/null
         echo ${3}
         echo "Can't download package ${1}, please try again later...!"
