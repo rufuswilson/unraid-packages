@@ -93,10 +93,14 @@ for d in ${SCRIPTPATH}/*/ ; do
 done
 
 if [[ ${hasUpdate} -eq 1 ]] ; then
-    cd "${SCRIPTPATH}/../slackware64-current"
-    bash "buildlist.sh" "./"
-    git add FILE_LIST CHECKSUMS.md5
-    git commit -m "Packages updated"
+   cd "${SCRIPTPATH}/../slackware64-current"
+   
+   echo "Comitting changes"
+   git add FILE_LIST CHECKSUMS.md5
+   git commit -m "Packages updated"
+   
+   echo "Pushing changes"
+   git push
 fi
 
 echo "Compilation finished"
