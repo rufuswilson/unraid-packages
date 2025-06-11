@@ -14,14 +14,14 @@ hasUpdate=0
 echo "Starting compilations"
 for d in ${SCRIPTPATH}/*/ ; do
    d="$(echo "${d}" | sed -e 's#/$##')"
-   if [ ! -d "${d}/slackbuild" ] ; then
+   if [[ ! -d "${d}/slackbuild" ]] ; then
       continue
    fi
    PACKAGE=$(basename -- "${d}")
    
    echo "  ${PACKAGE}"
 
-   if [ ! -d "${d}/logs" ] ; then
+   if [[ ! -d "${d}/logs" ]] ; then
       mkdir "${d}/logs"
    else
       rm -f "${d}/logs/"*.* 2>/dev/null
@@ -29,18 +29,18 @@ for d in ${SCRIPTPATH}/*/ ; do
 
    echo "     Checking version"
    bash "${d}/update.sh" > "${d}/logs/update.log"
-   if [ "$?" != 0 ]; then
+   if [[ "$?" != 0 ]]; then
       echo "          Already up to date"
       continue
    fi
 
    echo "     Preparing subfolders"
-   if [ ! -d "${d}/build-deps" ] ; then
+   if [[ ! -d "${d}/build-deps" ]] ; then
       mkdir "${d}/build-deps"
    else
       rm -f "${d}/build-deps/"*.{tbz,tgz,tlz,txz} 2>/dev/null
    fi
-   if [ ! -d "${d}/output" ] ; then
+   if [[ ! -d "${d}/output" ]] ; then
       mkdir "${d}/output"
    else
       rm -f "${d}/output/"*.* 2>/dev/null
@@ -49,7 +49,7 @@ for d in ${SCRIPTPATH}/*/ ; do
    echo "     Retrieving dependencies"
    DEPS="$(cat "${d}/requirements.txt" | tr -s '\n' ' ')"
    bash "${SCRIPTPATH}/pkgdl" download "${d}/build-deps" ${DEPS} > "${d}/logs/deps.log"
-   if [ "$?" != 0 ]; then
+   if [[ "$?" != 0 ]]; then
       echo "          xxx failed"
       exit 1
    fi
@@ -71,16 +71,16 @@ for d in ${SCRIPTPATH}/*/ ; do
       ghcr.io/lanjelin/slackbuilder:latest
       # -it --entrypoint /bin/bash \
    
-   if [ -z "$( ls -A '${d}/output/' )" ]; then
+   if [[ -z "$( ls -A '${d}/output/' )" ]]; then
       echo "          xx Failed to build"
       continue
    fi
 
    echo "     Copying package to repo"
-   if [ ! -d "${SCRIPTPATH}/../slackware64-current" ] ; then
+   if [[ ! -d "${SCRIPTPATH}/../slackware64-current" ]] ; then
       mkdir "${SCRIPTPATH}/../slackware64-current"
    fi
-   if [ ! -d "${SCRIPTPATH}/../slackware64-current/${PACKAGE}" ] ; then
+   if [[ ! -d "${SCRIPTPATH}/../slackware64-current/${PACKAGE}" ]] ; then
       mkdir "${SCRIPTPATH}/../slackware64-current/${PACKAGE}"
    fi
    rm "${SCRIPTPATH}/../slackware64-current/${PACKAGE}/"*.*
