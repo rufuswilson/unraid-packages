@@ -14,14 +14,14 @@ CONSOLIDATEDPATH="${SCRIPTPATH}/pkgdl-deps/filelists/consolidated"
 
 download_checksums() {
     cd "${SCRIPTPATH}/pkgdl-deps/filelists/"
-    if wget -q -nv -O "${2}.md5" "${1}/CHECKSUMS.md5" ; then
-        if [ -f "${2}.lst.old" ]; then
+    if wget -q -nv --show-progress --progress=dot:giga -O "${2}.md5" "${1}/CHECKSUMS.md5" ; then
+        if [[ -f "${2}.lst.old" ]]; then
             rm -f "${2}.lst.old" "${2}.md5.old"
         fi
     else
         rm -f "${2}.lst"
         rm -f "${2}.md5"
-        if [ -f "${2}.lst.old" ]; then
+        if [[ -f "${2}.lst.old" ]]; then
             echo "Can't fetch package list from repository $2, restoring old list, please try again later...!"
             mv "${2}.lst.old" "${2}.lst"
             mv "${2}.md5".old "${2}.md5"
@@ -33,15 +33,15 @@ download_checksums() {
 
 download_filelist() {
     cd "${SCRIPTPATH}/pkgdl-deps/filelists/"
-    if wget -q -nv -O "${2}.lst" "${1}/FILE_LIST" ; then
+    if wget -q -nv --show-progress --progress=dot:giga -O "${2}.lst" "${1}/FILE_LIST" ; then
         download_checksums "$1" "$2"
     else
         # Workaround from repositories which use 'FILELIST.TXT' instead of 'FILE_LIST' eg. Conraids repository
-        if wget -q -nv -O "${2}.lst" "${1}/FILELIST.TXT" ; then
+        if wget -q -nv --show-progress --progress=dot:giga -O "${2}.lst" "${1}/FILELIST.TXT" ; then
             download_checksums "$1" "$2"
         else
             rm -f "${2}.lst"
-            if [ -f "${2}.lst.old" ]; then
+            if [[ -f "${2}.lst.old" ]]; then
                 echo "Can't fetch package list, restoring old list, please try again later...!"
                 mv "${2}.lst.old" "${2}.lst"
                 mv "${2}.md5.old" "${2}.md5"
@@ -53,13 +53,13 @@ download_filelist() {
 }
 
 download_package() {
-    if [ ! -d "${SCRIPTPATH}/pkgdl-deps" ]; then
+    if [[ ! -d "${SCRIPTPATH}/pkgdl-deps" ]]; then
         mkdir -p "${SCRIPTPATH}/pkgdl-deps"
     fi
-    if [ ! -d "${SCRIPTPATH}/pkgdl-deps/cache" ]; then
+    if [[ ! -d "${SCRIPTPATH}/pkgdl-deps/cache" ]]; then
         mkdir -p "${SCRIPTPATH}/pkgdl-deps/cache"
     fi
-    if ! wget -q -nv -O "${3}" "${2}" ; then
+    if ! wget -q -nv --show-progress --progress=dot:giga -O "${3}" "${2}" ; then
         rm -f "${3}" 2>/dev/null
         echo ${3}
         echo "Can't download package ${1}, please try again later...!"
@@ -91,16 +91,16 @@ package_available_check() {
 }
 
 package_downloaded_find() {
-    if [ ! -d "${SCRIPTPATH}/pkgdl-deps" ]; then
+    if [[ ! -d "${SCRIPTPATH}/pkgdl-deps" ]]; then
         mkdir -p "${SCRIPTPATH}/pkgdl-deps"
     fi
-    if [ ! -d "${SCRIPTPATH}/pkgdl-deps/cache" ]; then
+    if [[ ! -d "${SCRIPTPATH}/pkgdl-deps/cache" ]]; then
         mkdir -p "${SCRIPTPATH}/pkgdl-deps/cache"
     fi
     find "${SCRIPTPATH}/pkgdl-deps/cache" -type f | grep -E "^.*/$(escape "${1}")-[0-9][^/]*\.(tbz|tlz|tgz|txz)$" | sort
 }
 package_downloaded_check() {
-    if [ ! -z "$(package_downloaded_find ${1})" ]; then
+    if [[ ! -z "$(package_downloaded_find ${1})" ]]; then
         return 0
     else
         return 1
@@ -110,7 +110,7 @@ package_downloaded_check() {
 
 update() {
     # Create folder if non exists
-    if [ ! -d "${SCRIPTPATH}/pkgdl-deps/filelists" ]; then
+    if [[ ! -d "${SCRIPTPATH}/pkgdl-deps/filelists" ]]; then
         mkdir -p "${SCRIPTPATH}/pkgdl-deps/filelists"
     fi
 
@@ -120,7 +120,7 @@ update() {
     # Check for sources.list file
     # Read sources.list file and download packagelists
     while read source; do
-        if [ "${source::1}" != "#" ]; then
+        if [[ "${source::1}" != "#" ]]; then
             REPO="${source##* }"
             echo "Updating repository: ${REPO}"
             URL="$(echo "${source% *}" | sed -e 's#/$##')"
@@ -133,13 +133,13 @@ update() {
     sort -o "${CONSOLIDATEDPATH}.lst" "${CONSOLIDATEDPATH}.lst"
 
     # Remove filelists not linked to a source
-    if [ ! -z ${SOURCES} ]; then
+    if [[ ! -z ${SOURCES} ]]; then
         rm -f $(find "${SCRIPTPATH}/pkgdl-deps/filelists/" -type f | grep -Ev "${SOURCES}")
     fi
 }
 
 download() {
-    if [ ! -d "${1}" ]; then
+    if [[ ! -d "${1}" ]]; then
         echo "Output folder doesn't exist: ${1}"
         exit 1
     fi
@@ -147,8 +147,8 @@ download() {
     shift
     for p in $@; do
         package_available_check ${p}
-        if [ "$?" != 0 ]; then
-            if [ ! -z "${FAILED_LIST}" ]; then
+        if [[ "$?" != 0 ]]; then
+            if [[ ! -z "${FAILED_LIST}" ]]; then
                 FAILED_LIST="${FAILED_LIST} ${p}"
             else
                 FAILED_LIST="${p}"
@@ -156,23 +156,23 @@ download() {
             continue
         fi
         package_downloaded_check ${p}
-        if [ "$?" == 0 ]; then
+        if [[ "$?" == 0 ]]; then
             echo "Package ${p} is already downloaded on your system!"
             p_="$(basename -- $(package_downloaded_find ${p}))"
-            if [ ! -z "${PACKAGE_LIST}" ]; then
+            if [[ ! -z "${PACKAGE_LIST}" ]]; then
                 PACKAGE_LIST="${PACKAGE_LIST} ${p_}"
             else
                 PACKAGE_LIST="${p_}"
             fi
         else
-            if [ ! -z "${DOWNLOAD_LIST}" ]; then
+            if [[ ! -z "${DOWNLOAD_LIST}" ]]; then
                 DOWNLOAD_LIST="${DOWNLOAD_LIST} ${p}"
             else
                 DOWNLOAD_LIST="${p}"
             fi
         fi
     done
-    if [ ! -z "${FAILED_LIST}" ]; then
+    if [[ ! -z "${FAILED_LIST}" ]]; then
         echo "Can't find package(s): ${FAILED_LIST// /, }!"
         exit 1
     fi
@@ -181,7 +181,7 @@ download() {
         PACKAGE="$(awk '{print $1}' <<< ${LAT_V})"
         URL="$(awk '{print $2}' <<< ${LAT_V})"
         download_package "${p}" "${URL}" "${SCRIPTPATH}/pkgdl-deps/cache/${PACKAGE}"
-        if [ ! -z "${PACKAGE_LIST}" ]; then
+        if [[ ! -z "${PACKAGE_LIST}" ]]; then
             PACKAGE_LIST="${PACKAGE_LIST} ${PACKAGE}"
         else
             PACKAGE_LIST="${PACKAGE}"
@@ -199,7 +199,7 @@ upgrade() {
         LAT_V="$(package_get "${NAME}")"
         PACKAGE="$(awk '{print $1}' <<< ${LAT_V})"
         URL="$(awk '{print $2}' <<< ${LAT_V})"
-        if [ "$(basename -- ${p})" != "${PACKAGE}" ]; then
+        if [[ "$(basename -- ${p})" != "${PACKAGE}" ]]; then
             download_package "${NAME}" "${URL}" "${SCRIPTPATH}/pkgdl-deps/cache/${PACKAGE}"
             rm "${p}"
         fi
@@ -207,10 +207,10 @@ upgrade() {
 }
 
 cleanup() {
-    if [ -d "${SCRIPTPATH}/pkgdl-deps/cache" ]; then
+    if [[ -d "${SCRIPTPATH}/pkgdl-deps/cache" ]]; then
         rm -rf "${SCRIPTPATH}/pkgdl-deps/cache"
     fi
-    if [ -d "${SCRIPTPATH}/pkgdl-deps/filelists" ]; then
+    if [[ -d "${SCRIPTPATH}/pkgdl-deps/filelists" ]]; then
         rm -rf "${SCRIPTPATH}/pkgdl-deps/filelists"
     fi
     find "${SCRIPTPATH}" -d -name "build-deps" -exec rm -rf {}/*.{tbz,tgz,tlz,txz} \;
@@ -244,28 +244,28 @@ usage_download() {
     echo "  ${SCRIPTNAME} download ../folder1 python-pip python-setuptools"
 }
 
-if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
+if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
     usage_general
     exit 0
-elif [ "$1" == "download" ]; then
+elif [[ "$1" == "download" ]]; then
     package_list_check
-    if [ "$?" != 0 ]; then
+    if [[ "$?" != 0 ]]; then
         exit 1
     fi
-    if [ $(expr $# - 1) -lt 1 ]; then
+    if [[ $(expr $# - 1) -lt 1 ]]; then
         usage_download
         exit 1
-    elif [ "$(echo "${@:2}" | tr -dc '[:alnum:]\n\r')" == "pkgget" ]; then
+    elif [[ "$(echo "${@:2}" | tr -dc '[:alnum:]\n\r')" == "pkgget" ]]; then
         usage_download
         exit 1
     else
         download "${@:2}"
     fi
-elif [ "$1" == "update" ]; then
+elif [[ "$1" == "update" ]]; then
     update
-elif [ "$1" == "upgrade" ]; then
+elif [[ "$1" == "upgrade" ]]; then
     upgrade
-elif [ "$1" == "cleanup" ]; then
+elif [[ "$1" == "cleanup" ]]; then
     cleanup
 else
     usage_general
