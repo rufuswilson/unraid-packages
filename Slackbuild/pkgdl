@@ -67,19 +67,23 @@ download_package() {
     fi
 }
 
+escape() {
+    sed 's/[^^]/[&]/g; s/\^/\\^/g; s/\-/\\-/g' <<<"${1}"
+}
+
 package_get() {
-    grep -iw "^${1}-[0-9][0-9]*\.*[0-9][0-9]*.*$" "${CONSOLIDATEDPATH}.lst"
+    grep -iw "^$(escape "${1}")-[0-9][0-9]*\.*[0-9][0-9]*.*$" "${CONSOLIDATEDPATH}.lst"
 }
 
 package_list_check() {
-    if [ ! -f "${CONSOLIDATEDPATH}.lst" ]; then
+    if [[ ! -f "${CONSOLIDATEDPATH}.lst" ]]; then
         echo "Please run '${SCRIPTNAME} update' first!"
         return 1
     fi
 }
 
 package_available_check() {
-    if [ ! -z "$(package_get "${1}")" ]; then
+    if [[ ! -z "$(package_get "${1}")" ]]; then
         return 0
     else
         return 1
@@ -93,7 +97,7 @@ package_downloaded_find() {
     if [ ! -d "${SCRIPTPATH}/pkgdl-deps/cache" ]; then
         mkdir -p "${SCRIPTPATH}/pkgdl-deps/cache"
     fi
-    find "${SCRIPTPATH}/pkgdl-deps/cache" -type f | grep -E "^.*/${1}-[0-9][^/]*\.(tbz|tlz|tgz|txz)$" | sort
+    find "${SCRIPTPATH}/pkgdl-deps/cache" -type f | grep -E "^.*/$(escape "${1}")-[0-9][^/]*\.(tbz|tlz|tgz|txz)$" | sort
 }
 package_downloaded_check() {
     if [ ! -z "$(package_downloaded_find ${1})" ]; then
@@ -144,28 +148,28 @@ download() {
     shift
     for p in $@; do
         package_available_check ${p}
-        if [ "$?" == 0 ]; then
-            package_downloaded_check ${p}
-            if [ "$?" == 0 ]; then
-                echo "Package ${p} is already downloaded on your system!"
-                p_="$(basename -- $(package_downloaded_find ${p}))"
-                if [ ! -z "${PACKAGE_LIST}" ]; then
-                    PACKAGE_LIST="${PACKAGE_LIST} ${p_}"
-                else
-                    PACKAGE_LIST="${p_}"
-                fi
-            else
-                if [ ! -z "${DOWNLOAD_LIST}" ]; then
-                    DOWNLOAD_LIST="${DOWNLOAD_LIST} ${p}"
-                else
-                    DOWNLOAD_LIST="${p}"
-                fi
-            fi
-        else
+        if [ "$?" != 0 ]; then
             if [ ! -z "${FAILED_LIST}" ]; then
                 FAILED_LIST="${FAILED_LIST} ${p}"
             else
                 FAILED_LIST="${p}"
+            fi
+            continue
+        fi
+        package_downloaded_check ${p}
+        if [ "$?" == 0 ]; then
+            echo "Package ${p} is already downloaded on your system!"
+            p_="$(basename -- $(package_downloaded_find ${p}))"
+            if [ ! -z "${PACKAGE_LIST}" ]; then
+                PACKAGE_LIST="${PACKAGE_LIST} ${p_}"
+            else
+                PACKAGE_LIST="${p_}"
+            fi
+        else
+            if [ ! -z "${DOWNLOAD_LIST}" ]; then
+                DOWNLOAD_LIST="${DOWNLOAD_LIST} ${p}"
+            else
+                DOWNLOAD_LIST="${p}"
             fi
         fi
     done
@@ -210,9 +214,8 @@ cleanup() {
     if [ -d "${SCRIPTPATH}/pkgdl-deps/filelists" ]; then
         rm -rf "${SCRIPTPATH}/pkgdl-deps/filelists"
     fi
-    find "${SCRIPTPATH}" -d -name "build-deps" -exec rm -rf {}/*.txz \;
+    find "${SCRIPTPATH}" -d -name "build-deps" -exec rm -rf {}/*.{tbz,tgz,tlz,txz} \;
 }
-
 
 usage_general() {
     echo "Slackware dependencies download tool for unRAID."
@@ -247,6 +250,9 @@ if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
     exit 0
 elif [ "$1" == "download" ]; then
     package_list_check
+    if [ "$?" != 0 ]; then
+        exit 1
+    fi
     if [ $(expr $# - 1) -lt 1 ]; then
         usage_download
         exit 1
