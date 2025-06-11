@@ -95,7 +95,7 @@ done
 if [[ ${hasUpdate} -eq 1 ]] ; then
     cd "${SCRIPTPATH}/../slackware64-current"
     bash "buildlist.sh" "./"
-    git add ./
+    git add FILE_LIST CHECKSUMS.md5
     git commit -m "Packages updated"
 fi
 
