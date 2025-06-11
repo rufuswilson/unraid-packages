@@ -14,7 +14,7 @@ CONSOLIDATEDPATH="${SCRIPTPATH}/pkgdl-deps/filelists/consolidated"
 
 download_checksums() {
     cd "${SCRIPTPATH}/pkgdl-deps/filelists/"
-    if wget -q --show-progress --progress=bar:force:noscroll -O "${2}.md5" "${1}/CHECKSUMS.md5" ; then
+    if wget -q -nv -O "${2}.md5" "${1}/CHECKSUMS.md5" ; then
         if [ -f "${2}.lst.old" ]; then
             rm -f "${2}.lst.old" "${2}.md5.old"
         fi
@@ -33,11 +33,11 @@ download_checksums() {
 
 download_filelist() {
     cd "${SCRIPTPATH}/pkgdl-deps/filelists/"
-    if wget -q --show-progress --progress=bar:force:noscroll -O "${2}.lst" "${1}/FILE_LIST" ; then
+    if wget -q -nv -O "${2}.lst" "${1}/FILE_LIST" ; then
         download_checksums "$1" "$2"
     else
         # Workaround from repositories which use 'FILELIST.TXT' instead of 'FILE_LIST' eg. Conraids repository
-        if wget -q --show-progress --progress=bar:force:noscroll -O "${2}.lst" "${1}/FILELIST.TXT" ; then
+        if wget -q -nv -O "${2}.lst" "${1}/FILELIST.TXT" ; then
             download_checksums "$1" "$2"
         else
             rm -f "${2}.lst"
@@ -59,7 +59,7 @@ download_package() {
     if [ ! -d "${SCRIPTPATH}/pkgdl-deps/cache" ]; then
         mkdir -p "${SCRIPTPATH}/pkgdl-deps/cache"
     fi
-    if ! wget -q --show-progress --progress=bar:force:noscroll -O "${3}" "${2}" ; then
+    if ! wget -q -nv -O "${3}" "${2}" ; then
         rm -f "${3}" 2>/dev/null
         echo ${3}
         echo "Can't download package ${1}, please try again later...!"
@@ -127,7 +127,6 @@ update() {
             download_filelist "${URL}" "${REPO}"
             grep -E "\.(tbz|tlz|tgz|txz)$" "${SCRIPTPATH}/pkgdl-deps/filelists/${REPO}.lst" | awk '{print $NF}' | sed 's/^[.]\///' | sed "s#^\(.*\)/\(.*\)\$#\2 ${URL}/\1/\2#" >> "${CONSOLIDATEDPATH}.lst"
             grep -E "\.(tbz|tlz|tgz|txz)$" "${SCRIPTPATH}/pkgdl-deps/filelists/${REPO}.md5" | sed -e 's#\./##' >> "${CONSOLIDATEDPATH}.md5"
-            echo "----"
             SOURCES="${SOURCES}|${REPO}"
         fi
     done <<< "$(cat "${SCRIPTPATH}/pkgdl-deps/sources.list" | sed '/^$/d')"
