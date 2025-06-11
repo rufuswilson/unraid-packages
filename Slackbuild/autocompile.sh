@@ -5,10 +5,10 @@ SCRIPTPATH=$(dirname "${SCRIPT}")
 SCRIPTNAME=$(basename -- "${SCRIPT}")
 
 echo "Update repositories"
-bash "${SCRIPTPATH}/pkgdl" update
+bash "${SCRIPTPATH}/pkgdl" update 2>&1 > "${SCRIPTPATH}/pkgdl.log"
 
 echo "Update slackbuilder docker image"
-docker pull ghcr.io/lanjelin/slackbuilder:latest
+docker pull ghcr.io/lanjelin/slackbuilder:latest > "${SCRIPTPATH}/docker.log"
 
 hasUpdate=0
 echo "Starting compilations"
