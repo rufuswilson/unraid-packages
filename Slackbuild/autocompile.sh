@@ -4,6 +4,9 @@ SCRIPT=$(readlink -f "$0")
 SCRIPTPATH=$(dirname "${SCRIPT}")
 SCRIPTNAME=$(basename -- "${SCRIPT}")
 
+echo "Update current repository"
+git pull > "${SCRIPTPATH}/git.log"
+
 echo "Update repositories"
 bash "${SCRIPTPATH}/pkgdl" update 2>&1 > "${SCRIPTPATH}/pkgdl.log"
 
