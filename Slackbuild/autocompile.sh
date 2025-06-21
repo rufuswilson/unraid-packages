@@ -6,6 +6,8 @@ SCRIPTNAME=$(basename -- "${SCRIPT}")
 
 rm "${SCRIPTPATH}/"*.log 2>&1 >/dev/null
 
+date +"%Y-%m-%d %T"
+
 echo "Update current repository" | tee -a "${SCRIPTPATH}/git.log"
 git pull >> "${SCRIPTPATH}/git.log"
 
@@ -23,7 +25,7 @@ for d in ${SCRIPTPATH}/*/ ; do
       continue
    fi
    PACKAGE=$(basename -- "${d}")
-   
+
    echo "  ${PACKAGE}"
    cd "${d}"
 
@@ -76,7 +78,7 @@ for d in ${SCRIPTPATH}/*/ ; do
       -e VERBOSITY=1 \
       ghcr.io/lanjelin/slackbuilder:latest
       # -it --entrypoint /bin/bash \
-   
+
    if [[ -z "$( ls -A "output/" )" ]]; then
       echo "          xx Failed to build"
       continue
@@ -100,17 +102,19 @@ done
 
 if [[ ${hasUpdate} -eq 1 ]] ; then
    cd "${SCRIPTPATH}/../slackware64-current"
-   
+
    bash buildlist.sh ./
-   
+
    echo '--------------------------' >> "${SCRIPTPATH}/git.log"
    echo "Comitting changes" | tee -a "${SCRIPTPATH}/git.log"
    git add FILE_LIST CHECKSUMS.md5
    git commit -m "Packages updated" | tee -a "${SCRIPTPATH}/git.log"
-   
+
    echo '--------------------------' >> "${SCRIPTPATH}/git.log"
    echo "Pushing changes" | tee -a "${SCRIPTPATH}/git.log"
    git push | tee -a "${SCRIPTPATH}/git.log"
 fi
 
 echo "Compilation finished"
+date +"%Y-%m-%d %T"
+
