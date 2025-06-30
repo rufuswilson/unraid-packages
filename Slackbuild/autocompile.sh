@@ -69,10 +69,10 @@ for d in ${SCRIPTPATH}/*/ ; do
    docker run \
       --rm \
       --name SBR_${PACKAGE}_${VERSIONNEW} \
-      --mount type=bind,src=build-deps,dst=/build-deps \
-      --mount type=bind,src=slackbuild,dst=/slackbuild \
-      --mount type=bind,src=output,dst=/output \
-      --mount type=bind,src=logs,dst=/logs \
+      --mount type=bind,src="${d}/build-deps",dst=/build-deps \
+      --mount type=bind,src="${d}/slackbuild",dst=/slackbuild \
+      --mount type=bind,src="${d}/output",dst=/output \
+      --mount type=bind,src="${d}/logs",dst=/logs \
       -e OUTPUT=/output \
       -e TMP=/tmp \
       -e VERBOSITY=1 \
