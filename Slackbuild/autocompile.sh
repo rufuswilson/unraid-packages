@@ -91,7 +91,7 @@ for d in ${SCRIPTPATH}/*/ ; do
    if [[ ! -d "${SCRIPTPATH}/../slackware64-current/${PACKAGE}" ]] ; then
       mkdir "${SCRIPTPATH}/../slackware64-current/${PACKAGE}"
    fi
-   rm "${SCRIPTPATH}/../slackware64-current/${PACKAGE}/"*.* 2>/dev/null
+   rm "${SCRIPTPATH}/../slackware64-current/${PACKAGE}/"*.{tbz,tgz,tlz,txz} 2>/dev/null
    cp "output/"*${VERSIONNEW}*.{tbz,tgz,tlz,txz} "${SCRIPTPATH}/../slackware64-current/${PACKAGE}/"
 
    echo "     Staging changes"
