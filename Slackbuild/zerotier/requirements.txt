@@ -22,5 +22,5 @@ nghttp3
 nodejs
 openssl
 openssl-solibs
-pkg-config
+pkgconf
 rust
