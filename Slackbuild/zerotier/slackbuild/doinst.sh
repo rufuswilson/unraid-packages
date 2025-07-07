@@ -9,7 +9,14 @@ varfld="/var/lib/zerotier-one"
 
 # kill all processes listening to 9993
 lsof -ti TCP:9993 | xargs kill -9
-rm -rf "${varfld}"
+if [[ -d "${varfld}" ]]; then
+   rm -rf "${varfld}"
+fi
+
+# create directories
+if [[ ! -d "${confld}" ]]; then
+   mkdir "${confld}"
+fi
 
 # generate private key
 if [[ ! -f "${confld}/identity.secret" ]]; then
@@ -24,6 +31,7 @@ fi
 
 # starting zerotier-one to populate var folder
 timeout -k 3s 3s zerotier-one
+lsof -ti TCP:9993 | xargs kill -9
 
 # populate the zerotier-one var folder
 cat "${confld}/identity.secret" > "${varfld}/identity.secret"

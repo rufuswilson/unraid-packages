@@ -1,9 +1,9 @@
-Mon Jun 30 23:01:14 CEST 2025
+Mon Jul  7 15:35:43 CEST 2025
 
 Directory listing of ./
 
--rw-r--r--  1 slackdev users      127 2025-06-12 02:05 ./CHECKSUMS.md5
--rw-r--r--  1 slackdev users       56 2025-06-30 23:01 ./FILE_LIST
--rw-r--r--  1 slackdev users      231 2025-06-30 18:49 ./README.md
+-rw-r--r--  1 slackdev users      228 2025-06-30 23:01 ./CHECKSUMS.md5
+-rw-r--r--  1 slackdev users       56 2025-07-07 15:35 ./FILE_LIST
+-rw-r--r--  1 slackdev users      903 2025-07-07 15:24 ./README.md
 -rw-r--r--  1 slackdev users      757 2025-06-30 22:15 ./zerotier/README.md
--rw-r--r--  1 slackdev users  3231196 2025-06-30 23:01 ./zerotier/zerotier-one-1.14.2-x86_64-1_RW.txz
+-rw-r--r--  1 slackdev users  3231472 2025-07-07 15:35 ./zerotier/zerotier-one-1.14.2-x86_64-1_RW.txz
