@@ -8,7 +8,8 @@ confld="/boot/config/plugins/zerotier"
 varfld="/var/lib/zerotier-one"
 
 # kill all processes listening to 9993
-lsof -ti TCP:9993 | xargs kill -9
+lsof -ti TCP:9993 | xargs -r kill -9
+sleep 3s
 if [[ -d "${varfld}" ]]; then
    rm -rf "${varfld}"
 fi
@@ -31,7 +32,9 @@ fi
 
 # starting zerotier-one to populate var folder
 timeout -k 3s 3s zerotier-one
-lsof -ti TCP:9993 | xargs kill -9
+sleep 5s
+lsof -ti TCP:9993 | xargs -r kill -9
+sleep 5s
 
 # populate the zerotier-one var folder
 cat "${confld}/identity.secret" > "${varfld}/identity.secret"
