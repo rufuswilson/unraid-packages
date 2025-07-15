@@ -38,3 +38,13 @@ Uninstall package
 
 Cleanup configuration
  >>> rm -rf /var/lib/zerotier-one
+
+
+killall zerotier-one
+lsof -ti TCP:9993 | xargs -r kill -9
+rm -rf /var/lib/zerotier-one
+un-get remove zerotier-one
+
+
+un-get update zerotier-one
+un-get install zerotier-one
