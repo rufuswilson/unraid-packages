@@ -55,3 +55,17 @@ sleep 5s
 
 zerotier-cli info
 zerotier-cli listnetworks
+
+# timeout to wait for the system to stabilize
+sleep 5s
+
+# add new interfaces to list of interfaces to listen to
+cfgFile=/boot/config/network-extra.cfg
+interfaces=$(zerotier-cli -j listnetworks | grep portDeviceName | sed -e 's/^.*"\([a-zA-Z0-9]*\)",.*$/\1/g')
+for interface in ${interfaces}; do
+    includes=$(cat "${cfgFile}" | grep include_ | sed -e 's/^.*="\([a-zA-Z0-9 ]*\)".*$/\1/g')
+    if [[ ${includes} != *"${interface}"* ]]; then
+        sed -i "s/^\(include_interfaces.*\)\"$/\1 ${interface}\"/g" "${cfgFile}"
+    fi
+done
+cat "${cfgFile}"
