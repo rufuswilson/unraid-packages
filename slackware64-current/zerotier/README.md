@@ -23,3 +23,18 @@ If the user prefers to use the cli interface to join networks, they should make 
 
 If the user wants be able to connect immediately to the new networks, they should add the interfaces created for each new network (zt\*) to the "Include listening interfaces" under "Settings/NetworkSettings/interface extra". The interface names can be obtained with the following command.
  >>> zerotier-cli listnetworks
+
+
+*** How to uninstall
+
+Stop the daemon
+ >>> killall zerotier-one
+
+Make sure daemon is stopped
+ >>> lsof -ti TCP:9993 | xargs -r kill -9
+
+Uninstall package
+ >>> un-get remove zerotier-one
+
+Cleanup configuration
+ >>> rm -rf /var/lib/zerotier-one
