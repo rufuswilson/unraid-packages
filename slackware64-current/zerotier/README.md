@@ -46,5 +46,5 @@ rm -rf /var/lib/zerotier-one
 un-get remove zerotier-one
 
 
-un-get update zerotier-one
+un-get update
 un-get install zerotier-one
